@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maveric 2D Shooter HTML5 Game</title>
+    <style>
+      * { padding: 0; margin: 0; }
+      canvas { image-rendering: pixelated; background: #eee; display: block; margin: 0 auto; }
+    </style>
+  </head>
+  <body>
+    <canvas id="maveric" width="800" height="600"></canvas>
+    <script src="https://github.com/liabru/matter-js/releases/download/0.9.0/matter.min.js"></script>
+
+    <script>
+      var assets = { 
+        'test': {'image':function(ctx) {
+          var size = 10;
+          var position = {'x':10, 'y':10};
+          var half = size*.5;
+          var rotation = Math.PI/4;
+
+          ctx.translate(position.x, position.y);
+          ctx.translate(half, half);
+          ctx.rotate(rotation);
+
+          ctx.beginPath();
+          ctx.fillStyle ="silver";
+          ctx.strokeStyle = 'gray';
+          ctx.moveTo(half, 0);
+          ctx.lineTo(size, size);
+          ctx.lineTo(0, size);
+          ctx.closePath();
+          ctx.fill();
+          ctx.resetTransform();
+        }},
+        'floor': {'image': function(ctx) {
+          var size = 40;
+          var half = size*.5;
+          var gridpos = {'x':1,'y':1};
+
+          ctx.translate(gridpos.x*size, gridpos.y*size);
+          ctx.translate(half, half);
+          ctx.scale(1, .5);
+          ctx.rotate(Math.PI/4);
+
+          ctx.fillStyle="gray";
+          ctx.strokeStyle="silver";
+          ctx.fillRect(-half,-half,size,size);
+          ctx.resetTransform();
+        }}
+      };
+      var gameError = false;
+      var ctx;
+      function loadImage(image, callback) {
+        if(!isF(image)){
+          var imgTag = document.createElement('img');
+          imgTag.src = image;
+          imgTag.onerror = errorGame;
+          imgTag.onload = callback;
+        }else{
+          callback.bind(image).call();
+          return image;
+        }
+      }
+      function isF(functionToCheck) {
+        var getType = {};
+        return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+      }
+      function game() {
+        var canvas = document.getElementById('maveric');
+        ctx = canvas.getContext('2d');
+        loadGame();
+      }
+      function loadGame() {
+        var loaded = true;
+        for(var asset in assets) {
+          if(assets.hasOwnProperty(asset)) {
+            if(assets[asset].loaded === undefined) {
+              loaded = false;
+              if(assets[asset].loading === undefined) {
+                loadImage(assets[asset].image, function() {
+                  assets[asset].loaded = true;
+                  assets[asset].img = this;
+                });
+                assets[asset].loading = true;
+              }
+            }
+          }
+        }
+        if(!loaded) {
+          setTimeout(loadGame, 10);
+        }else{
+          setTimeout(startLevel1, 10);
+        }
+      }
+      function startLevel1() {
+        ctx.fillStyle = "#ff0000";
+        if(isF(assets['test'].img)) {
+          assets['test'].img.call(this, ctx);
+        }else{
+          ctx.drawImage(assets['test'].img, 0, 0);
+        }
+
+        if(isF(assets['floor'].img)) {
+          assets['floor'].img.call(this,ctx);
+        }else{
+          ctx.drawImage(assets['floor'].img,0,0);
+        }
+      }
+      function errorGame() {
+        gameError = true;
+      }
+      window.onload = game;
+    </script>
+  </body>
+</html>

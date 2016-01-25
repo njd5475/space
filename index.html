@@ -60,8 +60,13 @@
           var sx = 0;
           var sy = 0.5;
           ctx.transform(1, sy, sx, 1, 0, 0);
-          ctx.fillRect(size,half,half,half);
-
+          ctx.fillRect(size-8,half+4,half+8,half);
+          sx = 0;
+          sy = -0.5;
+          ctx.resetTransform();
+          ctx.translate(40, 40);
+          ctx.transform(1, sy, sx, 1, 0, 0);
+          ctx.fillRect(size-20,half+4,half+8,half);
         }}
       };
       var gameError = false;

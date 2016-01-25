@@ -48,6 +48,20 @@
           ctx.strokeStyle="silver";
           ctx.fillRect(-half,-half,size,size);
           ctx.resetTransform();
+        }},
+        'wall': {'image': function(ctx) {
+          assets['floor'].image(ctx);
+          ctx.translate(0, -20);
+          assets['floor'].image(ctx);
+
+          var size = 40;
+          var half = size*.5;
+          ctx.fillStyle="darkgray";
+          var sx = 0;
+          var sy = 0.5;
+          ctx.transform(1, sy, sx, 1, 0, 0);
+          ctx.fillRect(size,half,half,half);
+
         }}
       };
       var gameError = false;
@@ -102,10 +116,10 @@
           ctx.drawImage(assets['test'].img, 0, 0);
         }
 
-        if(isF(assets['floor'].img)) {
-          assets['floor'].img.call(this,ctx);
+        if(isF(assets['wall'].img)) {
+          assets['wall'].img.call(this,ctx);
         }else{
-          ctx.drawImage(assets['floor'].img,0,0);
+          ctx.drawImage(assets['wall'].img,0,0);
         }
       }
       function errorGame() {

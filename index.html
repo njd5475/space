@@ -13,34 +13,17 @@
     <script src="https://github.com/liabru/matter-js/releases/download/0.9.0/matter.min.js"></script>
 
     <script>
+      var worldObjects = [
+        {size:20, x:4, y:4,asset: 'floor'}, 
+        {size:20, x:4, y:3,asset: 'wall'}
+      ];
       var assets = { 
-        'test': {'image':function(ctx) {
-          var size = 10;
-          var position = {'x':10, 'y':10};
+        'floor': {'image': function(obj, ctx) {
+          var size = obj.size;
           var half = size*.5;
-          var rotation = Math.PI/4;
 
-          ctx.translate(position.x, position.y);
-          ctx.translate(half, half);
-          ctx.rotate(rotation);
-
-          ctx.beginPath();
-          ctx.fillStyle ="silver";
-          ctx.strokeStyle = 'gray';
-          ctx.moveTo(half, 0);
-          ctx.lineTo(size, size);
-          ctx.lineTo(0, size);
-          ctx.closePath();
-          ctx.fill();
-          ctx.resetTransform();
-        }},
-        'floor': {'image': function(ctx) {
-          var size = 40;
-          var half = size*.5;
-          var gridpos = {'x':1,'y':1};
-
-          ctx.translate(gridpos.x*size, gridpos.y*size);
-          ctx.translate(half, half);
+          ctx.translate(obj.x*size, obj.y*size*.71);
+          ctx.translate(half, size);
           ctx.scale(1, .5);
           ctx.rotate(Math.PI/4);
 
@@ -49,22 +32,27 @@
           ctx.fillRect(-half,-half,size,size);
           ctx.resetTransform();
         }},
-        'wall': {'image': function(ctx) {
-          assets['floor'].image(ctx);
-          ctx.translate(0, -20);
-          assets['floor'].image(ctx);
+        'wall': {'image': function(obj, ctx) {
+          assets['floor'].image(obj,ctx);
+          ctx.translate(0, -obj.size*0.5);
+          assets['floor'].image(obj, ctx);
 
-          var size = 40;
+          var size = obj.size;
           var half = size*.5;
           ctx.fillStyle="darkgray";
           var sx = 0;
           var sy = 0.5;
+          ctx.translate(obj.x*size, obj.y*size*.71);
+          ctx.translate(half, size);
+          ctx.scale(1, .5);
+          ctx.rotate(Math.PI/4);
+
           ctx.transform(1, sy, sx, 1, 0, 0);
-          ctx.fillRect(size-8,half+4,half+8,half);
+          ctx.fillRect(size,half,half,half);
           sx = 0;
           sy = -0.5;
           ctx.resetTransform();
-          ctx.translate(40, 40);
+          ctx.translate(obj.x*size, obj.y*size);
           ctx.transform(1, sy, sx, 1, 0, 0);
           ctx.fillRect(size-20,half+4,half+8,half);
         }}
@@ -113,18 +101,18 @@
           setTimeout(startLevel1, 10);
         }
       }
+      function drawAsset(ctx, obj) {
+        var asset = obj.asset;
+        if(isF(assets[asset].img)) {
+          assets[asset].img.call(this, obj, ctx);
+        }else{
+          ctx.drawImage(assets[asset].img, 0, 0);
+        }
+      }
       function startLevel1() {
         ctx.fillStyle = "#ff0000";
-        if(isF(assets['test'].img)) {
-          assets['test'].img.call(this, ctx);
-        }else{
-          ctx.drawImage(assets['test'].img, 0, 0);
-        }
-
-        if(isF(assets['wall'].img)) {
-          assets['wall'].img.call(this,ctx);
-        }else{
-          ctx.drawImage(assets['wall'].img,0,0);
+        for(var i = 0; i < worldObjects.length; ++i) {
+          drawAsset(ctx, worldObjects[i]);
         }
       }
       function errorGame() {

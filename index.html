@@ -13,12 +13,18 @@
     <script src="https://github.com/liabru/matter-js/releases/download/0.9.0/matter.min.js"></script>
 
     <script>
-      var worldObjects = [
-        {size:30, x:4, y:4,asset: 'floor'}, 
-        {size:30, x:4, y:3,asset: 'wall'},
-        {size:30, x:3, y:4,asset: 'floor'}, 
-        {size:30, x:3, y:3,asset: 'wall'}
-      ];
+      var floorColor = "rgba(150,0,150,1)";
+      var wallColor = "rgba(150,150,150,.9)";
+      var worldObjects = [];
+      var mapSize = 50;
+      for(var i = 0; i < mapSize*mapSize; ++i) {
+        worldObjects.push({size:30, x:(i%mapSize), y: (Math.floor(i/mapSize)), asset:"floor", fill: floorColor});
+      }
+      var randomI = Math.floor(Math.random()*mapSize);
+      for(var i = 0; i < 100; ++i) {
+        worldObjects.push({size:30, asset: "wall", fill: wallColor, x: (randomI%mapSize), y: (Math.floor(randomI/mapSize))});
+        randomI += Math.floor(Math.random()*mapSize);
+      }
       var assets = { 
         'floor': {'image': function(obj, ctx) {
           var size = obj.size;
@@ -30,8 +36,8 @@
           ctx.translate(obj.x*size, obj.y*size);
           ctx.translate(half, half);
 
-          ctx.fillStyle="gray";
-          ctx.strokeStyle="silver";
+          ctx.fillStyle=obj.fill;
+          ctx.strokeStyle="black";
           ctx.fillRect(-half,-half,size,size);
         }},
         'wall': {'image': function(obj, ctx) {
@@ -40,7 +46,7 @@
           var half = size*.5;
           ctx.translate(-size, -size);
 
-          ctx.fillStyle="gray";
+          ctx.fillStyle=obj.fill;
           ctx.strokeStyle="silver";
           ctx.fillRect(-half,-half,size,size);
           ctx.transform(1, 0, 1, 1, 0, 0);

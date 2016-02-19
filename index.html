@@ -11,21 +11,35 @@
   <body>
     <canvas id="maveric" width="800" height="600"></canvas>
     <script src="https://github.com/liabru/matter-js/releases/download/0.9.0/matter.min.js"></script>
+    <script src="js/matrix.min.js"></script>
 
     <script>
       var floorColor = "rgba(150,0,150,1)";
       var wallColor = "rgba(150,150,150,.9)";
+      var avatarColor = "rgba(0,0,150,1)";
+      var avatar = {x:10,y:10,asset:"avatar", fill: avatarColor};
+      var gameObj = {state: 'running'};
       var worldObjects = [];
       var mapSize = 50;
+      var tileSize = 30;
       for(var i = 0; i < mapSize*mapSize; ++i) {
-        worldObjects.push({size:30, x:(i%mapSize), y: (Math.floor(i/mapSize)), asset:"floor", fill: floorColor});
+        worldObjects.push({size:tileSize, x:(i%mapSize), y: (Math.floor(i/mapSize)), asset:"floor", fill: floorColor});
       }
       var randomI = Math.floor(Math.random()*mapSize);
       for(var i = 0; i < 100; ++i) {
-        worldObjects.push({size:30, asset: "wall", fill: wallColor, x: (randomI%mapSize), y: (Math.floor(randomI/mapSize))});
+        worldObjects.push({size:tileSize, asset: "wall", fill: wallColor, x: (randomI%mapSize), y: (Math.floor(randomI/mapSize))});
         randomI += Math.floor(Math.random()*mapSize);
       }
       var assets = { 
+        'avatar': {'image': function(obj, ctx) {
+          ctx.resetTransform();
+          ctx.scale(1, .5);
+          ctx.rotate(Math.PI/4);
+          ctx.translate(200,50);
+          ctx.translate(obj.x, obj.y);
+          ctx.fillStyle=obj.fill;
+          ctx.fillRect(0, 0, 10, 10);
+        }},
         'floor': {'image': function(obj, ctx) {
           var size = obj.size;
           var half = size*.5;
@@ -82,6 +96,37 @@
       }
       function game() {
         var canvas = document.getElementById('maveric');
+        canvas.addEventListener("click", function() {
+          console.log(gameObj.state);
+          if(gameObj.state == 'running') {
+            gameObj.state = 'paused';
+          }else{
+            gameObj.state = 'running';
+            startLevel1();
+          }
+        });
+        keyHandler = function(e) {
+          if(gameObj.keystates === undefined) {
+            gameObj.keystates = {}; 
+          }
+          gameObj.keystates[e.keyCode] = e.type;
+        };
+        mouseHandler = function(e) {
+          gameObj.mousestate = {x: e.pageX, y: e.pageY};
+          gameObj.mousestate.x -= canvas.offsetLeft;
+          gameObj.mousestate.y -= canvas.offsetTop;
+          if(gameObj.hasOwnProperty('transform')) {
+            var m = gameObj.transform;
+            gameObj.mousestate = m.applyToPoint(e.pageX, e.pageY);
+            gameObj.mousestate.x /= tileSize;
+            gameObj.mousestate.y /= tileSize;
+            gameObj.mousestate.x = Math.floor(gameObj.mousestate.x);
+            gameObj.mousestate.y = Math.floor(gameObj.mousestate.y);
+          }
+        };
+        document.addEventListener('keydown', keyHandler);
+        document.addEventListener('keyup', keyHandler);
+        document.addEventListener('mousemove', mouseHandler);
         ctx = canvas.getContext('2d');
         loadGame();
       }
@@ -104,6 +149,12 @@
         if(!loaded) {
           setTimeout(loadGame, 10);
         }else{
+          gameObj.transform = new Matrix();
+          gameObj.transform.scale(1, .5);
+          gameObj.transform.rotate(Math.PI/4);
+          gameObj.transform.translate(200, 50);
+          gameObj.transform.translate(-tileSize/2, -tileSize/2);
+          gameObj.transform = gameObj.transform.inverse();
           setTimeout(startLevel1, 10);
         }
       }
@@ -116,9 +167,38 @@
         }
       }
       function startLevel1() {
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0,0,800,600);
         ctx.fillStyle = "#ff0000";
+
         for(var i = 0; i < worldObjects.length; ++i) {
           drawAsset(ctx, worldObjects[i]);
+        }
+        drawAsset(ctx, avatar);
+
+        // highlight mouse over rect
+        if(gameObj.hasOwnProperty('mousestate')) {
+          drawAsset(ctx, {size: tileSize, asset: 'floor', fill: '#00ff00', x: gameObj.mousestate.x-1, y: gameObj.mousestate.y});
+        }
+
+        // rendering gameloop
+        var d = new Date();
+        if(gameObj.lasttime === undefined) {
+          gameObj.lasttime = d.getTime();
+        }
+        var dt = (d.getTime() - gameObj.lasttime) * 0.001;
+        gameObj.lasttime = d.getTime();
+
+        ctx.resetTransform();
+        ctx.fillStyle = 'white';
+        ctx.fillText(dt, 0, 20);
+
+        if(gameObj.hasOwnProperty('mousestate')) {
+          ctx.fillText(gameObj.mousestate.x + ", " + gameObj.mousestate.y, 0, 40);
+        }
+
+        if(gameObj.state=='running') {
+          setTimeout(startLevel1, 10);
         }
       }
       function errorGame() {
